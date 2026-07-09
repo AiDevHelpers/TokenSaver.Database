@@ -1,0 +1,109 @@
+using Microsoft.EntityFrameworkCore;
+
+namespace TokenSaver.Database.Context;
+
+/// <summary>
+///     Opens the unified per-workspace index database, creating the schema, enabling WAL mode,
+///     and (re)creating the folder_overview view on first open. Callers should create one context
+///     per workspace per process and reuse it (mirrors the old single-connection-per-process
+///     pattern in LocalContextService / CodeIndexService).
+/// </summary>
+public static class WorkspaceIndexContextFactory
+{
+    public const string TokenSaverFolderName = ".tokensaver";
+    public const string IndexFileName = "index.db";
+
+    public static string GetDbPath(string workspaceRoot)
+    {
+        return Path.Combine(workspaceRoot, TokenSaverFolderName, IndexFileName);
+    }
+
+    /// <summary>
+    ///     Opens (creating if needed) the unified workspace index for the given workspace root,
+    ///     ensures the schema exists, enables WAL, and (re)creates the folder_overview view.
+    /// </summary>
+    public static async Task<WorkspaceIndexContext> CreateAsync(string workspaceRoot, CancellationToken ct = default)
+    {
+        string dbPath = GetDbPath(workspaceRoot);
+        _ = Directory.CreateDirectory(Path.GetDirectoryName(dbPath)!);
+
+        DbContextOptions<WorkspaceIndexContext> options = new DbContextOptionsBuilder<WorkspaceIndexContext>()
+            .UseSqlite($"Data Source={dbPath}")
+            .Options;
+
+        WorkspaceIndexContext ctx = new(options);
+        _ = await ctx.Database.EnsureCreatedAsync(ct);
+
+        // WAL: lets MCP tool reads proceed while a background indexing write is in flight.
+        _ = await ctx.Database.ExecuteSqlRawAsync("PRAGMA journal_mode=WAL;", ct);
+
+        // EnsureCreatedAsync only emits DDL when the database file doesn't exist yet — a workspace
+        // whose index.db predates the Chunks/TokenSavings tables (added for the token-economy tool
+        // surface) will NOT get them from EnsureCreatedAsync alone. Create both defensively with
+        // IF NOT EXISTS, matching the DDL EF's Sqlite provider would generate from the ChunkEntity/
+        // TokenSavingsEntity configuration in WorkspaceIndexContext.OnModelCreating — harmless no-op
+        // on a freshly-created database where EnsureCreatedAsync already made them.
+        _ = await ctx.Database.ExecuteSqlRawAsync(
+            """
+            CREATE TABLE IF NOT EXISTS "Chunks" (
+                "Id" INTEGER NOT NULL CONSTRAINT "PK_Chunks" PRIMARY KEY AUTOINCREMENT,
+                "RelativePath" TEXT NOT NULL,
+                "ChunkType" TEXT NOT NULL,
+                "Name" TEXT NOT NULL,
+                "StartLine" INTEGER NOT NULL,
+                "EndLine" INTEGER NOT NULL,
+                "ContentHash" TEXT NOT NULL,
+                "Summary" TEXT NOT NULL,
+                "EmbeddingVector" TEXT NOT NULL,
+                "UpdatedAt" INTEGER NOT NULL
+            );
+            """, ct);
+        _ = await ctx.Database.ExecuteSqlRawAsync(
+            """CREATE INDEX IF NOT EXISTS "IX_Chunks_RelativePath" ON "Chunks" ("RelativePath");""", ct);
+        _ = await ctx.Database.ExecuteSqlRawAsync(
+            """CREATE UNIQUE INDEX IF NOT EXISTS "IX_Chunks_RelativePath_StartLine_EndLine" ON "Chunks" ("RelativePath", "StartLine", "EndLine");""",
+            ct);
+
+        _ = await ctx.Database.ExecuteSqlRawAsync(
+            """
+            CREATE TABLE IF NOT EXISTS "TokenSavings" (
+                "Id" INTEGER NOT NULL CONSTRAINT "PK_TokenSavings" PRIMARY KEY AUTOINCREMENT,
+                "Tool" TEXT NOT NULL,
+                "Role" TEXT NOT NULL,
+                "Terse" INTEGER NOT NULL,
+                "RawTokens" INTEGER NOT NULL,
+                "DistilledTokens" INTEGER NOT NULL,
+                "SavedTokens" INTEGER NOT NULL,
+                "DurationMs" INTEGER NOT NULL,
+                "CreatedAt" INTEGER NOT NULL
+            );
+            """, ct);
+        _ = await ctx.Database.ExecuteSqlRawAsync(
+            """CREATE INDEX IF NOT EXISTS "IX_TokenSavings_Tool" ON "TokenSavings" ("Tool");""", ct);
+        _ = await ctx.Database.ExecuteSqlRawAsync(
+            """CREATE INDEX IF NOT EXISTS "IX_TokenSavings_Role" ON "TokenSavings" ("Role");""", ct);
+        _ = await ctx.Database.ExecuteSqlRawAsync(
+            """CREATE INDEX IF NOT EXISTS "IX_TokenSavings_CreatedAt" ON "TokenSavings" ("CreatedAt");""", ct);
+
+        // EnsureCreated does not emit DDL for entities mapped ToView — create it ourselves.
+        // Table names below match EF's default naming (DbSet property names): Folders, Files, Symbols.
+        _ = await ctx.Database.ExecuteSqlRawAsync(
+            """
+            CREATE VIEW IF NOT EXISTS folder_overview AS
+            SELECT
+              f."Id"            AS "Id",
+              f."RelativePath"  AS "RelativePath",
+              f."Description"   AS "Description",
+              f."LastModified"  AS "LastModified",
+              COUNT(DISTINCT fi."Id")  AS "FileCount",
+              COUNT(DISTINCT sy."Id")  AS "SymbolCount",
+              MAX(fi."LastModified")   AS "MaxChildLastModified"
+            FROM "Folders" f
+            LEFT JOIN "Files" fi   ON fi."FolderId" = f."Id"
+            LEFT JOIN "Symbols" sy ON sy."FileId"   = fi."Id"
+            GROUP BY f."Id";
+            """, ct);
+
+        return ctx;
+    }
+}
