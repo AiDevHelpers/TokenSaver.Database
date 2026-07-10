@@ -29,4 +29,10 @@ public class TokenSavingsEntity
     public int DurationMs { get; set; }
 
     public long CreatedAt { get; set; }
+
+    /// <summary>Number of turns in the conversation history at the time of this call (0 for non-conversational tools like RunTests/ContainerLogs).</summary>
+    public int ConversationTurns { get; set; }
+
+    /// <summary>Estimated token size of the whole conversation history at the time of this call (0 for non-conversational tools).</summary>
+    public int ConversationTokens { get; set; }
 }

@@ -75,7 +75,9 @@ public static class WorkspaceIndexContextFactory
                 "DistilledTokens" INTEGER NOT NULL,
                 "SavedTokens" INTEGER NOT NULL,
                 "DurationMs" INTEGER NOT NULL,
-                "CreatedAt" INTEGER NOT NULL
+                "CreatedAt" INTEGER NOT NULL,
+                "ConversationTurns" INTEGER NOT NULL DEFAULT 0,
+                "ConversationTokens" INTEGER NOT NULL DEFAULT 0
             );
             """, ct);
         _ = await ctx.Database.ExecuteSqlRawAsync(
@@ -84,6 +86,12 @@ public static class WorkspaceIndexContextFactory
             """CREATE INDEX IF NOT EXISTS "IX_TokenSavings_Role" ON "TokenSavings" ("Role");""", ct);
         _ = await ctx.Database.ExecuteSqlRawAsync(
             """CREATE INDEX IF NOT EXISTS "IX_TokenSavings_CreatedAt" ON "TokenSavings" ("CreatedAt");""", ct);
+
+        // TokenSavings predates ConversationTurns/ConversationTokens — CREATE TABLE IF NOT EXISTS
+        // above is a no-op against an existing table missing these columns, so add them here too.
+        // SQLite has no "ADD COLUMN IF NOT EXISTS"; swallow the duplicate-column error instead.
+        await AddColumnIfMissingAsync(ctx, "TokenSavings", "ConversationTurns", "INTEGER NOT NULL DEFAULT 0", ct);
+        await AddColumnIfMissingAsync(ctx, "TokenSavings", "ConversationTokens", "INTEGER NOT NULL DEFAULT 0", ct);
 
         // EnsureCreated does not emit DDL for entities mapped ToView — create it ourselves.
         // Table names below match EF's default naming (DbSet property names): Folders, Files, Symbols.
@@ -105,5 +113,20 @@ public static class WorkspaceIndexContextFactory
             """, ct);
 
         return ctx;
+    }
+
+    private static async Task AddColumnIfMissingAsync(
+        WorkspaceIndexContext ctx, string table, string column, string columnDef, CancellationToken ct)
+    {
+        try
+        {
+            _ = await ctx.Database.ExecuteSqlRawAsync(
+                $"""ALTER TABLE "{table}" ADD COLUMN "{column}" {columnDef};""", ct);
+        }
+        catch (Microsoft.Data.Sqlite.SqliteException ex) when (
+            ex.Message.Contains("duplicate column name", StringComparison.OrdinalIgnoreCase))
+        {
+            // Column already exists from a previous CreateAsync call — nothing to do.
+        }
     }
 }
