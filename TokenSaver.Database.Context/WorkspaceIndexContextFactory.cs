@@ -32,6 +32,22 @@ public static class WorkspaceIndexContextFactory
             .Options;
 
         WorkspaceIndexContext ctx = new(options);
+        try
+        {
+            await InitializeSchemaAsync(ctx, ct);
+            return ctx;
+        }
+        catch
+        {
+            // Dispose on failure: a leaked connection keeps the file open, so a corrupt index.db
+            // cannot be deleted and rebuilt by the caller (Windows sharing violation).
+            await ctx.DisposeAsync();
+            throw;
+        }
+    }
+
+    private static async Task InitializeSchemaAsync(WorkspaceIndexContext ctx, CancellationToken ct)
+    {
         _ = await ctx.Database.EnsureCreatedAsync(ct);
 
         // WAL: lets MCP tool reads proceed while a background indexing write is in flight.
@@ -111,8 +127,6 @@ public static class WorkspaceIndexContextFactory
             LEFT JOIN "Symbols" sy ON sy."FileId"   = fi."Id"
             GROUP BY f."Id";
             """, ct);
-
-        return ctx;
     }
 
     private static async Task AddColumnIfMissingAsync(
