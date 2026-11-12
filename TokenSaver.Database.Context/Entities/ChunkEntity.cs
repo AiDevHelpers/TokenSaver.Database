@@ -47,4 +47,16 @@ public class ChunkEntity
     public string EmbeddingVector { get; set; } = "";
 
     public long UpdatedAt { get; set; }
+
+    /// <summary>
+    ///     Stamp of the whole source file this chunk came from, copied onto every chunk row.
+    ///     RepoIndexer skips reading a file whose mtime and size still match, and skips chunk work
+    ///     when its raw-byte <see cref="FileHash" /> still matches.
+    /// </summary>
+    public long FileLastModified { get; set; }
+
+    public long FileSize { get; set; }
+
+    /// <summary>SHA256 (hex) of the file's raw bytes.</summary>
+    public string FileHash { get; set; } = "";
 }

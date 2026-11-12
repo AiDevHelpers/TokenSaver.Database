@@ -71,7 +71,10 @@ public static class WorkspaceIndexContextFactory
                 "ContentHash" TEXT NOT NULL,
                 "Summary" TEXT NOT NULL,
                 "EmbeddingVector" TEXT NOT NULL,
-                "UpdatedAt" INTEGER NOT NULL
+                "UpdatedAt" INTEGER NOT NULL,
+                "FileLastModified" INTEGER NOT NULL DEFAULT 0,
+                "FileSize" INTEGER NOT NULL DEFAULT 0,
+                "FileHash" TEXT NOT NULL DEFAULT ''
             );
             """, ct);
         _ = await ctx.Database.ExecuteSqlRawAsync(
