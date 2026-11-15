@@ -137,8 +137,10 @@ public static class WorkspaceIndexContextFactory
     {
         try
         {
+#pragma warning disable EF1002 // DDL identifiers are fixed schema names passed as literals from InitializeSchemaAsync; no user input reaches this SQL.
             _ = await ctx.Database.ExecuteSqlRawAsync(
                 $"""ALTER TABLE "{table}" ADD COLUMN "{column}" {columnDef};""", ct);
+#pragma warning restore EF1002
         }
         catch (Microsoft.Data.Sqlite.SqliteException ex) when (
             ex.Message.Contains("duplicate column name", StringComparison.OrdinalIgnoreCase))
