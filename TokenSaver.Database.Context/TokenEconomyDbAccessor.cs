@@ -46,6 +46,8 @@ public sealed class TokenEconomyDbAccessor : IDisposable
 
     public async Task<WorkspaceIndexContext> GetDbAsync(string workspaceRoot, CancellationToken ct)
     {
+        // One context per workspace, however the root was spelled (trailing separator, relative path).
+        workspaceRoot = WorkspaceIndexContextFactory.NormalizeRoot(workspaceRoot);
         if (_contexts.TryGetValue(workspaceRoot, out WorkspaceIndexContext? existing))
         {
             return existing;
