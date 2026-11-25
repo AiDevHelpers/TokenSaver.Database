@@ -1,14 +1,14 @@
-using TokenSaver.Database.Context.Entities;
+using AiDevTools.TokenSaver.Database.Context.Entities;
 
 using Microsoft.EntityFrameworkCore;
 
-namespace TokenSaver.Database.Context;
+namespace AiDevTools.TokenSaver.Database.Context;
 
 /// <summary>
 ///     EF Core-backed replacement for the old context.db (files/sections/summaries/folder_indices,
 ///     the latter a JSON blob per folder) and code-index.db (file_manifest/symbols/references_)
 ///     SQLite caches. One instance per workspace, stored at ".tokensaver/index.db".
-///     See plans/TokenSaver.UnifiedIndex.plan.md for the design rationale.
+///     See plans/AiDevTools.TokenSaver.UnifiedIndex.plan.md for the design rationale.
 /// </summary>
 public class WorkspaceIndexContext(DbContextOptions<WorkspaceIndexContext> options) : DbContext(options)
 {

@@ -1,9 +1,9 @@
-namespace TokenSaver.Database.Context.Entities;
+namespace AiDevTools.TokenSaver.Database.Context.Entities;
 
 /// <summary>
 ///     One row per function/class/markdown-section chunk within an indexed file — finer-grained
 ///     than <see cref="FileEntity" />'s single per-file <see cref="FileEntity.Description" />.
-///     Populated by RepoIndexer (TokenSaver.Library.Services.IRepoIndexer) and queried by
+///     Populated by RepoIndexer (AiDevTools.TokenSaver.Library.Services.IRepoIndexer) and queried by
 ///     SemanticGrep via cosine similarity over <see cref="EmbeddingVector" />. Unlike
 ///     <see cref="SymbolEntity" /> (exact/substring name search over statically-parsed symbols),
 ///     this table exists specifically for natural-language semantic search, so it carries an

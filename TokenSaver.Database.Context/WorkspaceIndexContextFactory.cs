@@ -3,7 +3,7 @@ using System.Data.Common;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 
-namespace TokenSaver.Database.Context;
+namespace AiDevTools.TokenSaver.Database.Context;
 
 /// <summary>
 ///     Opens the unified per-workspace index database. The schema comes from the EF model (EnsureCreated) and is

@@ -1,4 +1,4 @@
-namespace TokenSaver.Database.Context.Entities;
+namespace AiDevTools.TokenSaver.Database.Context.Entities;
 
 /// <summary>
 ///     A directed edge between two symbols (e.g. "method A calls method B"). Deliberately has no

@@ -1,9 +1,9 @@
-namespace TokenSaver.Database.Context.Entities;
+namespace AiDevTools.TokenSaver.Database.Context.Entities;
 
 /// <summary>
 ///     One row per function/type/section within a file. Replaces code-index.db's `symbols` table.
 ///     Id keeps the existing stable-hash scheme (SHA1 of FilePath+Name+Line) from
-///     TokenSaver.CodeHelper's SymbolEntry so existing symbol ids remain valid across the swap.
+///     AiDevTools.TokenSaver.CodeHelper's SymbolEntry so existing symbol ids remain valid across the swap.
 /// </summary>
 public class SymbolEntity
 {
@@ -16,8 +16,8 @@ public class SymbolEntity
     public string? FullName { get; set; }
 
     /// <summary>
-    ///     Maps to TokenSaver.CodeHelper.Models.Index.SymbolKind. Stored as int here so
-    ///     TokenSaver.Library doesn't need a project reference to TokenSaver.CodeHelper.
+    ///     Maps to AiDevTools.TokenSaver.CodeHelper.Models.Index.SymbolKind. Stored as int here so
+    ///     AiDevTools.TokenSaver.Library doesn't need a project reference to AiDevTools.TokenSaver.CodeHelper.
     /// </summary>
     public int Kind { get; set; }
 

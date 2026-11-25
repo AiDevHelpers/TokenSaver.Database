@@ -1,4 +1,4 @@
-namespace TokenSaver.Database.Context.Entities;
+namespace AiDevTools.TokenSaver.Database.Context.Entities;
 
 /// <summary>
 ///     One row per indexed file. Absorbs both the old context.db `files`/`sections` tables

@@ -1,8 +1,8 @@
-namespace TokenSaver.Database.Context.Entities;
+namespace AiDevTools.TokenSaver.Database.Context.Entities;
 
 /// <summary>
 ///     Keyless entity mapped to the `folder_overview` SQL view (created manually by
-///     <see cref="TokenSaver.Database.Context.WorkspaceIndexContextFactory" />, since EF Core's
+///     <see cref="AiDevTools.TokenSaver.Database.Context.WorkspaceIndexContextFactory" />, since EF Core's
 ///     EnsureCreated does not generate DDL for entities configured with ToView). One row per
 ///     folder: file/symbol counts and freshest child mtime in a single query, so
 ///     "does the draft model need to descend into this folder" doesn't require walking children.

@@ -1,6 +1,6 @@
 using System.Collections.Concurrent;
 
-namespace TokenSaver.Database.Context;
+namespace AiDevTools.TokenSaver.Database.Context;
 
 /// <summary>
 ///     DB-access seam for the token-economy services (SavingsTracker, RepoIndexer,
@@ -9,7 +9,7 @@ namespace TokenSaver.Database.Context;
 ///     warm-up call against the default root racing an explicit caller-supplied
 ///     <c>workspaceRoot</c> for a different one) plus the lock that serializes access to it (EF
 ///     Core's DbContext isn't thread-safe), mirroring
-///     <c>TokenSaver.CodeHelper.Indexing.WorkspaceIndexDbAccessor</c>'s pattern exactly.
+///     <c>AiDevTools.TokenSaver.CodeHelper.Indexing.WorkspaceIndexDbAccessor</c>'s pattern exactly.
 ///     Previously this cached a single context/root pair and disposed+replaced it whenever a
 ///     different root came in — safe only as long as nothing else held a reference to the old
 ///     context. Once <see cref="WithDbLockAsync{T}(Func{Task{T}},CancellationToken)" /> callers
@@ -18,8 +18,8 @@ namespace TokenSaver.Database.Context;
 ///     context a concurrent caller was still using, throwing ObjectDisposedException. Each root now
 ///     keeps its own entry for the accessor's lifetime instead.
 ///     Deliberately a separate accessor/instance rather than reusing
-///     <c>WorkspaceIndexDbAccessor</c> directly: that type lives in TokenSaver.CodeHelper, which
-///     already depends on TokenSaver.Library — depending on it from here would be a backwards/
+///     <c>WorkspaceIndexDbAccessor</c> directly: that type lives in AiDevTools.TokenSaver.CodeHelper, which
+///     already depends on AiDevTools.TokenSaver.Library — depending on it from here would be a backwards/
 ///     circular project reference. Both accessors open the same underlying SQLite file
 ///     (".tokensaver/index.db", the one DB file for this workspace) via
 ///     <see cref="WorkspaceIndexContextFactory" />; WAL mode (enabled by the factory) allows

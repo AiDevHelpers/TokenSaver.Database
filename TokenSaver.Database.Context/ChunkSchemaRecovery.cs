@@ -2,7 +2,7 @@ using System.Data.Common;
 
 using Microsoft.EntityFrameworkCore;
 
-namespace TokenSaver.Database.Context;
+namespace AiDevTools.TokenSaver.Database.Context;
 
 /// <summary>
 ///     Rebuild strategy for a stored index whose Chunks table predates the current columns.

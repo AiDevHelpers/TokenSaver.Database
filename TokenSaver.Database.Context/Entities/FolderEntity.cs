@@ -1,4 +1,4 @@
-namespace TokenSaver.Database.Context.Entities;
+namespace AiDevTools.TokenSaver.Database.Context.Entities;
 
 /// <summary>
 ///     One row per workspace folder. Replaces the old context.db `folder_indices` table, which
